@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kwan Yi-He Mail Client - Episode 3 Scene 18</title>
+  <!-- 引入谷歌标准 Roboto 字体，确保所有手机均能渲染标准无衬线字体 -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", "Google Sans", Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #111318; /* Gmail Mobile Dark Mode 背景色 */
+      color: #e3e2e6;
+      overflow-x: hidden;
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      position: relative;
+      padding-bottom: 80px; /* 预留底部固定按钮的高度，防止遮挡滑动内容 */
+    }
+
+    /* 顶部 App Bar */
+    .app-bar {
+      height: 56px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background-color: #111318;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      color: #c4c6d0; /* Gmail Icon 灰色 */
+      font-size: 20px;
+      cursor: pointer;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .action-icons {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* SVG 图标定义 */
+    .archive-svg, .trash-svg, .mail-svg {
+      width: 20px;
+      height: 20px;
+      fill: #c4c6d0;
+    }
+
+    /* 主题标题和标签区 */
+    .mail-subject-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px;
+      background-color: #111318;
+    }
+
+    .subject-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .mail-subject {
+      font-size: 20px;
+      font-weight: 400;
+      color: #e3e2e6;
+      line-height: 1.3;
+    }
+
+    .label-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: #c4c6d0;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .tag-external {
+      background-color: #6a4413;
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .arrow-sep {
+      color: #c4c6d0;
+      font-size: 12px;
+    }
+
+    .tag-inbox {
+      background-color: #343538;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .action-icons-subject {
+      display: flex;
+      gap: 12px;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .star-icon {
+      font-size: 18px;
+      color: #c4c6d0;
+    }
+
+    /* 发件人/时间布局区域 */
+    .sender-date-bar {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 0 18px 12px 18px;
+      background-color: #111318;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #4a5568;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .sender-details {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sender-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+      width: 100%;
+    }
+
+    .sender-name-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .sender-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #e3e2e6;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sender-meta {
+      font-size: 12px;
+      color: #8e9099;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* 发件人行右侧操作图标组：添加回应、回复、更多 */
+    .sender-actions-subject {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .icon-small {
+      font-size: 16px;
+      color: #c4c6d0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    
+    .reply-svg, .face-svg {
+      width: 16px;
+      height: 16px;
+      fill: #c4c6d0;
+    }
+
+    /* 交互式 to me 按键 */
+    .recipient-line {
+      font-size: 12px;
+      color: #8e9099;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      margin-top: 2px;
+    }
+
+    /* 展开的技术细节面板 */
+    .meta-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, margin 0.3s ease;
+      background-color: #111318;
+      border-radius: 12px;
+      padding: 0 18px;
+      font-size: 13px;
+      color: #c4c6d0;
+    }
+
+    .meta-details.expanded {
+      max-height: 180px;
+      padding: 12px 18px;
+      margin: 4px 18px 16px 18px;
+      border: 1px solid #2d3039;
+    }
+
+    .meta-row {
+      display: flex;
+      margin-bottom: 8px;
+      align-items: baseline;
+    }
+    .meta-row:last-child { margin-bottom: 0; }
+    
+    .meta-label {
+      width: 70px;
+      color: #8e9099;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .meta-val {
+      flex: 1;
+      word-break: break-all;
+      font-family: inherit;
+      font-size: 13px;
+      color: #e3e2e6;
+    }
+
+    .lock-svg {
+      width: 18px;
+      height: 18px;
+      fill: #8e9099;
+    }
+
+    .learn-more-link {
+      font-size: 12px;
+      color: #8ab4f8;
+      cursor: pointer;
+      margin-top: 2px;
+      font-weight: 500;
+    }
+
+    /* 邮件正文文字 - 调整为标准 Gmail 原生字体大小与间距 */
+    .email-body {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #e3e2e6;
+      padding: 16px 18px;
+      background-color: #111318;
+      font-weight: 400;
+      letter-spacing: 0.2px;
+    }
+
+    /* 插入模式照片区 */
+    .inserted-photos {
+      display: flex;
+      gap: 12px;
+      padding: 0 18px 24px 18px;
+      background-color: #111318;
+    }
+
+    .inserted-photo-card {
+      flex: 1;
+      height: 120px;
+      background-color: #1a1c23;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #2d3039;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #8e9099;
+      font-size: 16px;
+    }
+
+    /* 底部操作按钮 - 吸底固定 */
+    .mail-footer-actions {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      gap: 12px;
+      padding: 12px 18px 20px 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      background-color: #111318;
+      z-index: 100;
+    }
+
+    .action-btn {
+      flex: 1;
+      height: 40px;
+      background-color: #1e2027;
+      border: 1px solid #2d3039;
+      border-radius: 20px;
+      color: #c4c6d0;
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .action-btn-svg {
+      width: 18px;
+      height: 18px;
+      fill: #c4c6d0;
+    }
+
+    /* 照片全屏查看器 Overlay */
+    .photo-viewer-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.95);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .photo-viewer-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .photo-viewer-top-bar {
+      width: 100%;
+      height: 56px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: absolute;
+      top: 0;
+      left: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background-color: rgba(0, 0, 0, 0.5);
+      color: #e3e2e6;
+    }
+    
+    .viewer-filename-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: #e3e2e6;
+    }
+    
+    .viewer-close-btn {
+      background: none;
+      border: none;
+      color: #c4c6d0;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .viewer-content-middle {
+      flex: 1;
+      max-width: 90%;
+      max-height: 80%;
+      background-color: #1a1c23;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #e3e2e6;
+      font-size: 18px;
+      padding: 24px;
+      margin-top: 56px;
+    }
+
+    .view-image-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .photo-name-view {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .photo-viewer-bottom-bar {
+      width: 100%;
+      height: 56px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      background-color: rgba(0, 0, 0, 0.5);
+      color: #c4c6d0;
+      padding-bottom: 10px;
+    }
+    
+    .bottom-viewer-icon {
+      font-size: 20px;
+      color: #c4c6d0;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <main>
+    
+    <!-- 顶部 App Bar：归档、垃圾桶、未读/邮件、更多 -->
+    <div class="app-bar">
+      <button class="icon-btn">←</button>
+      <div class="action-icons">
+        <!-- 1. 归档 Icon -->
+        <button class="icon-btn">
+          <svg class="archive-svg" viewBox="0 0 24 24">
+            <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM6.24 5h11.52l.83 1H5.41l.83-1zM19 19H5V8h14v11zm-2-6h-3.32l-1.18 1.18c-.28.28-.73.28-1 0L10.32 13H7c-.55 0-1 .45-1 1v2c0 .55.45 1 1 1h10c.55 0 1-.45 1-1v-2c0-.55-.45-1-1-1z"/>
+          </svg>
+        </button>
+        <!-- 2. 垃圾桶 Icon -->
+        <button class="icon-btn">
+          <svg class="trash-svg" viewBox="0 0 24 24">
+            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+          </svg>
+        </button>
+        <!-- 3. 未读 Icon -->
+        <button class="icon-btn">
+          <svg class="mail-svg" viewBox="0 0 24 24">
+            <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+          </svg>
+        </button>
+        <!-- 4. 更多 Icon -->
+        <button class="icon-btn">⋮</button>
+      </div>
+    </div>
+
+    <!-- 主题标题和标签区（唯一星标在此处） -->
+    <div class="mail-subject-container">
+      <div class="subject-info">
+        <h1 class="mail-subject">(no subject)</h1>
+        <div class="label-group">
+          <span class="tag-external">EXTERNAL</span>
+          <span class="arrow-sep">›</span>
+          <span class="tag-inbox">INBOX</span>
+        </div>
+      </div>
+      <div class="action-icons-subject">
+        <span class="star-icon">☆</span>
+      </div>
+    </div>
+
+    <!-- 发件人/时间布局区域 -->
+    <div class="sender-date-bar">
+      <div class="avatar">?</div> <!-- 匿名发件人头像 -->
+      <div class="sender-details">
+        <div class="sender-top-row">
+          <div class="sender-name-group">
+            <span class="sender-name">x7f9a2k04</span> <!-- 仅保留用户名 -->
+            <span class="sender-meta">1 min ago</span>
+          </div>
+          <!-- 发件人行右侧 3 个图标：添加回应、回复、更多 -->
+          <div class="sender-actions-subject">
+            <span class="icon-small">
+              <svg class="face-svg" viewBox="0 0 24 24">
+                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4.5-8.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zm-9 0c.83 0 1.5-.67 1.5-1.5S8.33 7 7.5 7s-1.5.67-1.5 1.5.67 1.5 1.5 1.5zm6 4c1.84 0 3.32 1.25 3.86 3h-1.07c-.45-.98-1.53-1.67-2.79-1.67s-2.34.69-2.79 1.67H7.14c.54-1.75 2.02-3 3.86-3z"/>
+              </svg>
+            </span>
+            <span class="icon-small">
+              <svg class="reply-svg" viewBox="0 0 24 24">
+                <path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/>
+              </svg>
+            </span>
+            <span class="icon-small">⋮</span>
+          </div>
+        </div>
+        <!-- to me 按键 ▾ 下拉 -->
+        <div class="recipient-line" id="metaToggle" onclick="toggleMeta()">
+          to me <span id="toMeArrow">▾</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 展开的技术细节面板 -->
+    <div class="meta-details" id="metaDetails">
+      <div class="meta-row">
+        <span class="meta-label">From:</span>
+        <span class="meta-val">x7f9a2k04@vmail.com</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">To:</span>
+        <span class="meta-val">wen@vmail.com</span>
+      </div>
+      <!-- 锁头在 To 下方，加密信息与电邮地址对齐 -->
+      <div class="meta-row" style="align-items: flex-start; margin-top: 4px;">
+        <div class="meta-label" style="display: flex; align-items: center;">
+          <svg class="lock-svg" viewBox="0 0 24 24">
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+          </svg>
+        </div>
+        <div class="meta-val" style="display: flex; flex-direction: column;">
+          <span>Standard encryption (TLS)</span>
+          <span class="learn-more-link">Learn more</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 邮件正文 -->
+    <div class="email-body">
+      杀关镇邦者，叶承峰。
+    </div>
+
+    <!-- 插入模式照片区 -->
+    <div class="inserted-photos">
+      <!-- 照片占位 1 -->
+      <div class="inserted-photo-card" onclick="openPhoto('IMG_0918_TEAHOUSE_ENTRANCE.JPG')">
+        ?
+      </div>
+
+      <!-- 照片占位 2 -->
+      <div class="inserted-photo-card" onclick="openPhoto('IMG_0918_EXIT_ANGLE.JPG')">
+        ?
+      </div>
+    </div>
+
+    <!-- 底部操作按钮：换成原生的 SVG 矢量图标 -->
+    <div class="mail-footer-actions">
+      <button class="action-btn">
+        <svg class="action-btn-svg" viewBox="0 0 24 24">
+          <path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/>
+        </svg>
+        Reply
+      </button>
+      <button class="action-btn">
+        <svg class="action-btn-svg" viewBox="0 0 24 24">
+          <path d="M14 9V5l7 7-7 7v-4.1c-5 0-8.5 1.6-11 5.1 1-5 4-10 11-11z"/>
+        </svg>
+        Forward
+      </button>
+    </div>
+
+    <!-- 照片全屏查看器 Overlay -->
+    <div class="photo-viewer-overlay" id="photoViewer">
+      <div class="photo-viewer-top-bar">
+        <span class="viewer-filename-text" id="viewerFileNameView"></span>
+        <button class="viewer-close-btn" onclick="closePhoto()">✕</button>
+      </div>
+        
+      <div class="viewer-content-middle">
+        <div class="view-image-placeholder">
+          <span class="view-icon">🖼</span>
+          <span class="photo-name-view" id="photoNameView"></span>
+          <span class="empty-view-text">[Photo content will be placed here]</span>
+        </div>
+      </div>
+        
+      <div class="photo-viewer-bottom-bar">
+        <span class="bottom-viewer-icon">⬇</span>
+        <span class="bottom-viewer-icon">⤴</span>
+        <span class="bottom-viewer-icon">⋮</span>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    function toggleMeta() {
+      const details = document.getElementById('metaDetails');
+      const arrow = document.getElementById('toMeArrow');
+      
+      details.classList.toggle('expanded');
+      arrow.textContent = details.classList.contains('expanded') ? '▴' : '▾';
+    }
+
+    function openPhoto(photoName) {
+      const viewer = document.getElementById('photoViewer');
+      const photoNameView = document.getElementById('photoNameView');
+      const viewerFileNameView = document.getElementById('viewerFileNameView');
+      photoNameView.textContent = photoName;
+      viewerFileNameView.textContent = photoName;
+      viewer.classList.add('show');
+    }
+
+    function closePhoto() {
+      const viewer = document.getElementById('photoViewer');
+      viewer.classList.remove('show');
+    }
+  </script>
+</body>
+</html>
