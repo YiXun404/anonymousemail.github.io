@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mobile Mail Client</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #111318;
+      color: #e3e2e6;
+      overflow-x: hidden;
+    }
+
+    /* 页面视图切换控制 */
+    .view-page {
+      display: none;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+    .view-page.active {
+      display: flex;
+    }
+
+    /* --- 1. Inbox 列表页样式 --- */
+    .inbox-header {
+      height: 56px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #111318;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .search-bar-mock {
+      flex: 1;
+      height: 46px;
+      background-color: #2b2d35;
+      border-radius: 23px;
+      margin: 0 12px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      color: #8e9099;
+      font-size: 15px;
+      gap: 12px;
+    }
+
+    .avatar-small {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #4a5568;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .inbox-section-title {
+      font-size: 12px;
+      color: #8e9099;
+      padding: 12px 16px 4px 16px;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .mail-list-item {
+      display: flex;
+      align-items: flex-start;
+      padding: 12px 16px;
+      gap: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      background-color: #111318;
+      position: relative;
+    }
+
+    .mail-list-item:active {
+      background-color: #1a1c23;
+    }
+
+    .mail-list-item.unread .item-sender {
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .mail-list-item.unread .item-subject {
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .mail-list-item.unread .item-time {
+      color: #a8c7fa;
+      font-weight: 500;
+    }
+    .mail-list-item.unread .item-snippet {
+      color: #c4c6d0;
+    }
+
+    .unread-badge {
+      display: none;
+      width: 8px;
+      height: 8px;
+      background-color: #a8c7fa;
+      border-radius: 50%;
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+    }
+    .mail-list-item.unread .unread-badge {
+      display: block;
+    }
+
+    .item-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #3b4252;
+      color: #eceff4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .item-content {
+      flex: 1;
+      min-width: 0;
+      padding-right: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .item-row-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+
+    .item-sender {
+      font-size: 15px;
+      font-weight: 400;
+      color: #c4c6d0;
+    }
+
+    .item-time {
+      font-size: 12px;
+      color: #8e9099;
+    }
+
+    .item-subject {
+      font-size: 14px;
+      color: #c4c6d0;
+      font-weight: 400;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-snippet {
+      font-size: 13px;
+      color: #8e9099;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* --- 2. 邮件详情页样式 --- */
+    main {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      position: relative;
+      padding-bottom: 80px;
+    }
+
+    .app-bar {
+      height: 56px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background-color: #111318;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      color: #c4c6d0;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .action-icons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .archive-svg, .trash-svg, .mail-svg {
+      width: 20px;
+      height: 20px;
+      fill: #c4c6d0;
+    }
+
+    .mail-subject-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background-color: #111318;
+    }
+
+    .subject-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .mail-subject {
+      font-size: 20px;
+      font-weight: 400;
+      color: #e3e2e6;
+      line-height: 1.3;
+    }
+
+    .label-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: #c4c6d0;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .tag-external {
+      background-color: #6a4413;
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .arrow-sep {
+      color: #c4c6d0;
+      font-size: 12px;
+    }
+
+    .tag-inbox {
+      background-color: #343538;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .action-icons-subject {
+      display: flex;
+      gap: 12px;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .star-icon {
+      font-size: 18px;
+      color: #c4c6d0;
+    }
+
+    .sender-date-bar {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 0 20px 12px 20px;
+      background-color: #111318;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #4a5568;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .sender-details {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sender-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+      width: 100%;
+    }
+
+    .sender-name-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .sender-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #e3e2e6;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sender-meta {
+      font-size: 12px;
+      color: #8e9099;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .sender-actions-subject {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .icon-small {
+      font-size: 16px;
+      color: #c4c6d0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    
+    .reply-svg, .face-svg {
+      width: 16px;
+      height: 16px;
+      fill: #c4c6d0;
+    }
+
+    .recipient-line {
+      font-size: 12px;
+      color: #8e9099;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      margin-top: 2px;
+    }
+
+    .meta-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, margin 0.3s ease;
+      background-color: #111318;
+      border-radius: 12px;
+      padding: 0 20px;
+      font-size: 13px;
+      color: #c4c6d0;
+    }
+
+    .meta-details.expanded {
+      max-height: 180px;
+      padding: 12px 18px;
+      margin: 4px 20px 16px 20px;
+      border: 1px solid #2d3039;
+    }
+
+    .meta-row {
+      display: flex;
+      margin-bottom: 8px;
+      align-items: baseline;
+    }
+    .meta-row:last-child { margin-bottom: 0; }
+    
+    .meta-label {
+      width: 70px;
+      color: #8e9099;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .meta-val {
+      flex: 1;
+      word-break: break-all;
+      font-family: inherit;
+      font-size: 13px;
+      color: #e3e2e6;
+    }
+
+    .lock-svg {
+      width: 18px;
+      height: 18px;
+      fill: #8e9099;
+    }
+
+    .learn-more-link {
+      font-size: 12px;
+      color: #8ab4f8;
+      cursor: pointer;
+      margin-top: 2px;
+      font-weight: 500;
+    }
+
+    .email-body {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #e3e2e6;
+      padding: 16px 20px;
+      background-color: #111318;
+      font-weight: 400;
+      letter-spacing: 0.2px;
+    }
+
+    /* 终极修复：使用明确的外边距（margin: 0 20px）和圆角容器，确保左右两侧物理留白（约 0.5cm） */
+    .inserted-photos-wrapper {
+      padding: 0 20px 24px 20px;
+      background-color: #111318;
+      width: 100%;
+    }
+
+    .inserted-photos {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      background-color: #111318;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    
+    .inserted-photos::-webkit-scrollbar {
+      display: none;
+    }
+
+    .inserted-photo-card {
+      flex: 0 0 40vw;
+      width: 40vw;
+      height: 110px;
+      background-color: #1a1c23;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #2d3039;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      scroll-snap-align: start;
+    }
+
+    .inserted-photo-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .mail-footer-actions {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      gap: 12px;
+      padding: 12px 20px 20px 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      background-color: #111318;
+      z-index: 100;
+    }
+
+    .action-btn {
+      flex: 1;
+      height: 40px;
+      background-color: #1e2027;
+      border: 1px solid #2d3039;
+      border-radius: 20px;
+      color: #c4c6d0;
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .action-btn-svg {
+      width: 18px;
+      height: 18px;
+      fill: #c4c6d0;
+    }
+
+    /* 照片全屏查看器 Overlay */
+    .photo-viewer-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.95);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .photo-viewer-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .photo-viewer-top-bar {
+      width: 100%;
+      height: 56px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: absolute;
+      top: 0;
+      left: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background-color: rgba(0, 0, 0, 0.5);
+      color: #e3e2e6;
+      z-index: 210;
+    }
+    
+    .viewer-filename-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: #e3e2e6;
+    }
+    
+    .viewer-close-btn {
+      background: none;
+      border: none;
+      color: #c4c6d0;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .viewer-slider-container {
+      flex: 1;
+      width: 100%;
+      margin-top: 56px;
+      margin-bottom: 56px;
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .viewer-slider-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .viewer-slide-wrapper {
+      flex: 0 0 100vw;
+      width: 100vw;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      scroll-snap-align: center;
+      padding: 16px;
+    }
+
+    .viewer-slide-wrapper img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+
+    .viewer-indicator {
+      position: absolute;
+      bottom: 72px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #e3e2e6;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 4px 12px;
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: 210;
+    }
+    
+    .photo-viewer-bottom-bar {
+      width: 100%;
+      height: 56px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      background-color: rgba(0, 0, 0, 0.8);
+      color: #c4c6d0;
+      z-index: 210;
+    }
+    
+    .bottom-viewer-icon {
+      font-size: 20px;
+      color: #c4c6d0;
+      cursor: pointer;
+      background: none;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+    }
+
+    .bottom-viewer-icon svg {
+      width: 22px;
+      height: 22px;
+      fill: #c4c6d0;
+    }
+
+    .toast-message {
+      position: absolute;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      background-color: #32353e;
+      color: #e3e2e6;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 400;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      z-index: 250;
+      text-align: left;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    .toast-message.show {
+      opacity: 1;
+      visibility: visible;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= VIEW 1: INBOX 首页列表 ================= -->
+  <div id="inboxView" class="view-page active">
+    <div class="inbox-header">
+      <button class="icon-btn">☰</button>
+      <div class="search-bar-mock">
+        <span>Search mail</span>
+      </div>
+      <div class="avatar-small">W</div>
+    </div>
+
+    <div class="inbox-section-title">Primary</div>
+
+    <div class="mail-list-item unread" id="targetMailItem" onclick="openDetailView()">
+      <div class="item-avatar" style="background-color: #6366f1;">X</div>
+      <div class="item-content">
+        <div class="item-row-top">
+          <span class="item-sender">x7f9a2k04</span>
+          <span class="item-time">Just Now</span>
+        </div>
+        <div class="item-subject">(no subject)</div>
+      </div>
+      <div class="unread-badge"></div>
+    </div>
+
+    <div class="mail-list-item">
+      <div class="item-avatar" style="background-color: #10b981;">A</div>
+      <div class="item-content">
+        <div class="item-row-top">
+          <span class="item-sender">Apex Security Guard</span>
+          <span class="item-time">Yesterday</span>
+        </div>
+        <div class="item-subject">New login detected on primary account</div>
+        <div class="item-snippet">Your account was accessed from an unrecognized location...</div>
+      </div>
+    </div>
+
+    <div class="mail-list-item">
+      <div class="item-avatar" style="background-color: #3b82f6;">L</div>
+      <div class="item-content">
+        <div class="item-row-top">
+          <span class="item-sender">Lin Chen</span>
+          <span class="item-time">Yesterday</span>
+        </div>
+        <div class="item-subject">Transfer Receipt</div>
+        <div class="item-snippet">上个月的费用已结算转账，请注意查收账单。</div>
+      </div>
+    </div>
+
+    <div class="mail-list-item">
+      <div class="item-avatar" style="background-color: #f59e0b;">A</div>
+      <div class="item-content">
+        <div class="item-row-top">
+          <span class="item-sender">Apex Financial Services</span>
+          <span class="item-time">Yesterday</span>
+        </div>
+        <div class="item-subject">Monthly Statement - September</div>
+        <div class="item-snippet">Your monthly account summary is now ready for download...</div>
+      </div>
+    </div>
+
+    <div class="mail-list-item">
+      <div class="item-avatar" style="background-color: #0ea5e9;">V</div>
+      <div class="item-content">
+        <div class="item-row-top">
+          <span class="item-sender">V-Cloud Notice</span>
+          <span class="item-time">Wed</span>
+        </div>
+        <div class="item-subject">Storage Capacity Warning</div>
+        <div class="item-snippet">Your cloud storage space has reached 85% of total limit...</div>
+      </div>
+    </div>
+
+    <div class="mail-list-item">
+      <div class="item-avatar" style="background-color: #8b5cf6;">K</div>
+      <div class="item-content">
+        <div class="item-row-top">
+          <span class="item-sender">Kevin Zhao</span>
+          <span class="item-time">Wed</span>
+        </div>
+        <div class="item-subject">Documents Inquiry</div>
+        <div class="item-snippet">上次谈到的关于上季度的纸质档案，请问放在哪个档案柜？</div>
+      </div>
+    </div>
+
+    <div class="mail-list-item">
+      <div class="item-avatar" style="background-color: #ec4899;">A</div>
+      <div class="item-content">
+        <div class="item-row-top">
+          <span class="item-sender">Apex Pay Service</span>
+          <span class="item-time">Tue</span>
+        </div>
+        <div class="item-subject">Automatic Payment Executed</div>
+        <div class="item-snippet">Payment to Subscription ID #8841 was processed successfully...</div>
+      </div>
+    </div>
+
+    <div class="mail-list-item">
+      <div class="item-avatar" style="background-color: #14b8a6;">O</div>
+      <div class="item-content">
+        <div class="item-row-top">
+          <span class="item-sender">Omni Desk Support</span>
+          <span class="item-time">Tue</span>
+        </div>
+        <div class="item-subject">Ticket #7710 Status Update</div>
+        <div class="item-snippet">Your technical ticket regarding network credentials has been closed...</div>
+      </div>
+    </div>
+
+    <div class="mail-list-item">
+      <div class="item-avatar" style="background-color: #64748b;">M</div>
+      <div class="item-content">
+        <div class="item-row-top">
+          <span class="item-sender">M. Vance</span>
+          <span class="item-time">Mon</span>
+        </div>
+        <div class="item-subject">Item Return</div>
+        <div class="item-snippet">你要的东西已经寄存到了前台，随时可以取走。</div>
+      </div>
+    </div>
+
+    <div class="mail-list-item">
+      <div class="item-avatar" style="background-color: #f97316;">V</div>
+      <div class="item-content">
+        <div class="item-row-top">
+          <span class="item-sender">V-Express Express</span>
+          <span class="item-time">Mon</span>
+        </div>
+        <div class="item-subject">Shipment Delivered</div>
+        <div class="item-snippet">Tracking #90210 has been delivered to your designated mailbox...</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= VIEW 2: 邮件详情页 ================= -->
+  <div id="detailView" class="view-page">
+    <main>
+      <div class="app-bar">
+        <button class="icon-btn" onclick="backToInbox()">←</button>
+        <div class="action-icons">
+          <button class="icon-btn">
+            <svg class="archive-svg" viewBox="0 0 24 24">
+              <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM6.24 5h11.52l.83 1H5.41l.83-1zM19 19H5V8h14v11zm-2-6h-3.32l-1.18 1.18c-.28.28-.73.28-1 0L10.32 13H7c-.55 0-1 .45-1 1v2c0 .55.45 1 1h10c.55 0 1-.45 1-1v-2c0-.55-.45-1-1-1z"/>
+            </svg>
+          </button>
+          <button class="icon-btn">
+            <svg class="trash-svg" viewBox="0 0 24 24">
+              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+            </svg>
+          </button>
+          <button class="icon-btn">
+            <svg class="mail-svg" viewBox="0 0 24 24">
+              <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+          </button>
+          <button class="icon-btn">⋮</button>
+        </div>
+      </div>
+
+      <div class="mail-subject-container">
+        <div class="subject-info">
+          <h1 class="mail-subject">(no subject)</h1>
+          <div class="label-group">
+            <span class="tag-external">EXTERNAL</span>
+            <span class="arrow-sep">›</span>
+            <span class="tag-inbox">INBOX</span>
+          </div>
+        </div>
+        <div class="action-icons-subject">
+          <span class="star-icon">☆</span>
+        </div>
+      </div>
+
+      <div class="sender-date-bar">
+        <div class="avatar">?</div>
+        <div class="sender-details">
+          <div class="sender-top-row">
+            <div class="sender-name-group">
+              <span class="sender-name">x7f9a2k04</span>
+              <span class="sender-meta">Just Now</span>
+            </div>
+            <div class="sender-actions-subject">
+              <span class="icon-small">
+                <svg class="face-svg" viewBox="0 0 24 24">
+                  <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4.5-8.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zm-9 0c.83 0 1.5-.67 1.5-1.5S8.33 7 7.5 7s-1.5.67-1.5 1.5.67 1.5 1.5 1.5zm6 4c1.84 0 3.32 1.25 3.86 3h-1.07c-.45-.98-1.53-1.67-2.79-1.67s-2.34.69-2.79 1.67H7.14c.54-1.75 2.02-3 3.86-3z"/>
+                </svg>
+              </span>
+              <span class="icon-small">
+                <svg class="reply-svg" viewBox="0 0 24 24">
+                  <path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/>
+                </svg>
+              </span>
+              <span class="icon-small">⋮</span>
+            </div>
+          </div>
+          <div class="recipient-line" id="metaToggle" onclick="toggleMeta()">
+            to me <span id="toMeArrow">▾</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="meta-details" id="metaDetails">
+        <div class="meta-row">
+          <span class="meta-label">From:</span>
+          <span class="meta-val">x7f9a2k04@vmail.com</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">To:</span>
+          <span class="meta-val">wen@vmail.com</span>
+        </div>
+        <div class="meta-row" style="align-items: flex-start; margin-top: 4px;">
+          <div class="meta-label" style="display: flex; align-items: center;">
+            <svg class="lock-svg" viewBox="0 0 24 24">
+              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+            </svg>
+          </div>
+          <div class="meta-val" style="display: flex; flex-direction: column;">
+            <span>Standard encryption (TLS)</span>
+            <span class="learn-more-link">Learn more</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="email-body">
+        杀关镇邦者，叶承峰。
+      </div>
+
+      <!-- 独立的外层包装容器，强制拥有 20px 左右留白，彻底解决不缩进问题 -->
+      <div class="inserted-photos-wrapper">
+        <div class="inserted-photos">
+          <div class="inserted-photo-card" onclick="openPhoto(0)">
+            <img src="https://cdn.phototourl.com/member/2026-10-17-ca33f3d4-2531-48be-b47e-2ee7c0e94a7b.jpg" alt="Image 1">
+          </div>
+          <div class="inserted-photo-card" onclick="openPhoto(1)">
+            <img src="https://cdn.phototourl.com/member/2026-10-17-3baeba7c-4c1a-4d7d-b40d-f280bb04f74c.jpg" alt="Image 2">
+          </div>
+          <div class="inserted-photo-card" onclick="openPhoto(2)">
+            <img src="https://cdn.phototourl.com/member/2026-10-17-1bcf7698-fa42-4a12-9eaa-db3b2cfa1569.jpg" alt="Image 3">
+          </div>
+          <div class="inserted-photo-card" onclick="openPhoto(3)">
+            <img src="https://cdn.phototourl.com/member/2026-10-17-65cb7c1a-3e88-438e-947b-c46e426bb934.jpg" alt="Image 4">
+          </div>
+        </div>
+      </div>
+
+      <div class="mail-footer-actions">
+        <button class="action-btn">
+          <svg class="action-btn-svg" viewBox="0 0 24 24">
+            <path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/>
+          </svg>
+          Reply
+        </button>
+        <button class="action-btn">
+          <svg class="action-btn-svg" viewBox="0 0 24 24">
+            <path d="M14 9V5l7 7-7 7v-4.1c-5 0-8.5 1.6-11 5.1 1-5 4-10 11-11z"/>
+          </svg>
+          Forward
+        </button>
+      </div>
+
+      <div class="photo-viewer-overlay" id="photoViewer">
+        <div class="photo-viewer-top-bar">
+          <span class="viewer-filename-text" id="viewerFileNameView">Image 1</span>
+          <button class="viewer-close-btn" onclick="closePhoto()">✕</button>
+        </div>
+          
+        <div class="viewer-slider-container" id="viewerSlider">
+          <div class="viewer-slide-wrapper">
+            <img src="https://cdn.phototourl.com/member/2026-10-17-ca33f3d4-2531-48be-b47e-2ee7c0e94a7b.jpg" alt="Full view 1">
+          </div>
+          <div class="viewer-slide-wrapper">
+            <img src="https://cdn.phototourl.com/member/2026-10-17-3baeba7c-4c1a-4d7d-b40d-f280bb04f74c.jpg" alt="Full view 2">
+          </div>
+          <div class="viewer-slide-wrapper">
+            <img src="https://cdn.phototourl.com/member/2026-10-17-1bcf7698-fa42-4a12-9eaa-db3b2cfa1569.jpg" alt="Full view 3">
+          </div>
+          <div class="viewer-slide-wrapper">
+            <img src="https://cdn.phototourl.com/member/2026-10-17-65cb7c1a-3e88-438e-947b-c46e426bb934.jpg" alt="Full view 4">
+          </div>
+        </div>
+
+        <div class="viewer-indicator" id="viewerIndicator">1/4</div>
+        <div id="downloadToast" class="toast-message">Image saved to gallery</div>
+          
+        <div class="photo-viewer-bottom-bar">
+          <button class="bottom-viewer-icon" title="Download" onclick="showDownloadToast()">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          </button>
+          <button class="bottom-viewer-icon" title="Share">
+            <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+          </button>
+          <button class="bottom-viewer-icon" title="More Options">
+            <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function openDetailView() {
+      document.getElementById('inboxView').classList.remove('active');
+      document.getElementById('detailView').classList.add('active');
+      window.scrollTo(0, 0);
+    }
+
+    function backToInbox() {
+      document.getElementById('detailView').classList.remove('active');
+      document.getElementById('inboxView').classList.add('active');
+    }
+
+    function toggleMeta() {
+      const details = document.getElementById('metaDetails');
+      const arrow = document.getElementById('toMeArrow');
+      details.classList.toggle('expanded');
+      arrow.textContent = details.classList.contains('expanded') ? '▴' : '▾';
+    }
+
+    function openPhoto(index) {
+      const viewer = document.getElementById('photoViewer');
+      const slider = document.getElementById('viewerSlider');
+      
+      viewer.classList.add('show');
+      
+      setTimeout(() => {
+        const slideWidth = slider.clientWidth;
+        slider.scrollLeft = slideWidth * index;
+        updateViewerState(index);
+      }, 10);
+    }
+
+    function closePhoto() {
+      const viewer = document.getElementById('photoViewer');
+      viewer.classList.remove('show');
+    }
+
+    function showDownloadToast() {
+      const toast = document.getElementById('downloadToast');
+      toast.classList.add('show');
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    function initViewerSlider() {
+      const slider = document.getElementById('viewerSlider');
+      slider.addEventListener('scroll', () => {
+        const index = Math.round(slider.scrollLeft / slider.clientWidth);
+        updateViewerState(index);
+      });
+    }
+
+    function updateViewerState(index) {
+      const indicator = document.getElementById('viewerIndicator');
+      const title = document.getElementById('viewerFileNameView');
+      indicator.textContent = (index + 1) + '/4';
+      title.textContent = 'Image ' + (index + 1);
+    }
+
+    window.onload = function() {
+      initViewerSlider();
+    };
+  </script>
+</body>
+</html>
